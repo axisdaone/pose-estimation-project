@@ -1,0 +1,22 @@
+{
+  "n_samples": 1326,
+  "sample_shape": [
+    3,
+    150,
+    20
+  ],
+  "n_joints": 20,
+  "target_sequence_length": 150,
+  "n_folds": 10,
+  "label_distribution": {
+    "correct": 663,
+    "incorrect": 663
+  },
+  "sequence_length_stats": {
+    "min": 92,
+    "max": 432,
+    "mean": 218.92006033182503,
+    "median": 208.0
+  },
+  "data_root": "data\\UI-PRMD\\Reduced_Dataset\\Kinect"
+}

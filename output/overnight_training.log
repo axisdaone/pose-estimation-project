@@ -1,0 +1,138 @@
+[2026-08-25 02:42:46] ======================================================================
+[2026-08-25 02:42:46]   OVERNIGHT TRAINING RUNNER — LST-LA-GCN / UI-PRMD
+[2026-08-25 02:42:46]   Started at: 2026-08-25 02:42:46
+[2026-08-25 02:42:46]   Max retries: 5
+[2026-08-25 02:42:46]   Checkpoint: output\training_checkpoint.json
+[2026-08-25 02:42:46]   Log: output\overnight_training.log
+[2026-08-25 02:42:46] ======================================================================
+[2026-08-25 02:42:46] 
+--- Attempt 1/5 ---
+[2026-08-25 02:42:46] Completed folds so far: none
+[2026-08-25 02:42:46] Remaining: 10 folds
+[2026-08-25 02:42:46] Command: C:\Users\askra\anaconda3\python.exe train.py --num_folds 10 --epochs 100 --batch_size 32 --lr 1e-3 --weight_decay 1e-4 --dropout 0.3 --patience 15 --num_workers 4 --parallel_folds 0 --checkpoint_file output\training_checkpoint.json --output_file ./output/training_results.json
+OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
+OMP: Hint This means that multiple copies of the OpenMP runtime have been linked into the program. That is dangerous, since it can degrade performance or cause incorrect results. The best thing to do is to ensure that only a single OpenMP runtime is linked into the process, e.g. by avoiding static linking of the OpenMP runtime in any library. As an unsafe, unsupported, undocumented workaround you can set the environment variable KMP_DUPLICATE_LIB_OK=TRUE to allow the program to continue to execute, but that may cause crashes or silently produce incorrect results. For more information, please see http://www.intel.com/software/products/support/.
+[2026-08-25 02:42:48] 
+Training exited with code 3 after 2.0s
+[2026-08-25 02:42:48] Folds saved in checkpoint: []
+[2026-08-25 02:42:48] Retrying in 30s... (will resume from checkpoint)
+[2026-08-25 02:43:18] 
+--- Attempt 2/5 ---
+[2026-08-25 02:43:18] Completed folds so far: none
+[2026-08-25 02:43:18] Remaining: 10 folds
+[2026-08-25 02:43:18] Command: C:\Users\askra\anaconda3\python.exe train.py --num_folds 10 --epochs 100 --batch_size 32 --lr 1e-3 --weight_decay 1e-4 --dropout 0.3 --patience 15 --num_workers 4 --parallel_folds 0 --checkpoint_file output\training_checkpoint.json --output_file ./output/training_results.json
+OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
+OMP: Hint This means that multiple copies of the OpenMP runtime have been linked into the program. That is dangerous, since it can degrade performance or cause incorrect results. The best thing to do is to ensure that only a single OpenMP runtime is linked into the process, e.g. by avoiding static linking of the OpenMP runtime in any library. As an unsafe, unsupported, undocumented workaround you can set the environment variable KMP_DUPLICATE_LIB_OK=TRUE to allow the program to continue to execute, but that may cause crashes or silently produce incorrect results. For more information, please see http://www.intel.com/software/products/support/.
+[2026-08-25 02:43:19] 
+Training exited with code 3 after 1.3s
+[2026-08-25 02:43:19] Folds saved in checkpoint: []
+[2026-08-25 02:43:19] Retrying in 30s... (will resume from checkpoint)
+[2026-08-25 02:44:11] ======================================================================
+[2026-08-25 02:44:11]   OVERNIGHT TRAINING RUNNER — LST-LA-GCN / UI-PRMD
+[2026-08-25 02:44:11]   Started at: 2026-08-25 02:44:11
+[2026-08-25 02:44:11]   Max retries: 5
+[2026-08-25 02:44:11]   Checkpoint: output\training_checkpoint.json
+[2026-08-25 02:44:11]   Log: output\overnight_training.log
+[2026-08-25 02:44:11] ======================================================================
+[2026-08-25 02:44:11] 
+--- Attempt 1/5 ---
+[2026-08-25 02:44:11] Completed folds so far: none
+[2026-08-25 02:44:11] Remaining: 10 folds
+[2026-08-25 02:44:11] Command: C:\Users\askra\anaconda3\python.exe train.py --num_folds 10 --epochs 100 --batch_size 32 --lr 1e-3 --weight_decay 1e-4 --dropout 0.3 --patience 15 --num_workers 4 --parallel_folds 0 --checkpoint_file output\training_checkpoint.json --output_file ./output/training_results.json
+02:44:15 | INFO    | PyTorch threads: 16 (CPUs: 16)
+02:44:15 | INFO    | Using device: cpu
+02:44:15 | INFO    | Parallel folds: 2
+02:44:15 | INFO    | DataLoader workers per fold: 4
+02:44:15 | INFO    | PyTorch threads per fold: 8
+02:44:15 | INFO    | 
+Verifying preprocessed data at: ./output/preprocessed
+02:44:15 | INFO    | Loading preprocessed data from output\preprocessed...
+02:44:15 | INFO    |   Loaded 1326 samples, 10 folds, adjacency (20, 20)
+02:44:15 | INFO    |   Subject 1: 142 samples
+02:44:15 | INFO    |   Subject 2: 142 samples
+02:44:15 | INFO    |   Subject 3: 156 samples
+02:44:15 | INFO    |   Subject 4: 168 samples
+02:44:15 | INFO    |   Subject 5: 160 samples
+02:44:15 | INFO    |   Subject 6: 164 samples
+02:44:15 | INFO    |   Subject 7: 34 samples
+02:44:15 | INFO    |   Subject 8: 172 samples
+02:44:15 | INFO    |   Subject 9: 150 samples
+02:44:15 | INFO    |   Subject 10: 38 samples
+02:44:15 | INFO    | 
+======================================================================
+02:44:15 | INFO    |   TRAINING CONFIGURATION
+02:44:15 | INFO    | ======================================================================
+02:44:15 | INFO    |   Folds:            10
+02:44:15 | INFO    |   Epochs:           100
+02:44:15 | INFO    |   Batch size:       32
+02:44:15 | INFO    |   Learning rate:    0.001
+02:44:15 | INFO    |   Weight decay:     0.0001
+02:44:15 | INFO    |   Dropout:          0.3
+02:44:15 | INFO    |   Patience:         15
+02:44:15 | INFO    |   Channels:         (64, 128, 256)
+02:44:15 | INFO    |   Device:           cpu
+02:44:15 | INFO    |   Parallel folds:   2
+02:44:15 | INFO    |   DataLoader workers: 4
+02:44:15 | INFO    |   PyTorch threads:  8 per fold
+02:44:15 | INFO    | ======================================================================
+
+02:44:15 | INFO    | Folds to run: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+02:44:15 | INFO    | 
+*** PARALLEL MODE: Running 2 folds concurrently ***
+
+02:44:18 | INFO    | Loading preprocessed data from output\preprocessed...
+02:44:18 | INFO    | Loading preprocessed data from output\preprocessed...
+02:44:18 | INFO    |   Loaded 1326 samples, 10 folds, adjacency (20, 20)
+02:44:18 | INFO    |   Subject 1: 142 samples
+02:44:18 | INFO    |   Subject 2: 142 samples
+02:44:18 | INFO    |   Subject 3: 156 samples
+02:44:18 | INFO    |   Subject 4: 168 samples
+02:44:18 | INFO    |   Subject 5: 160 samples
+02:44:18 | INFO    |   Subject 6: 164 samples
+02:44:18 | INFO    |   Subject 7: 34 samples
+02:44:18 | INFO    |   Subject 8: 172 samples
+02:44:18 | INFO    |   Subject 9: 150 samples
+02:44:18 | INFO    |   Subject 10: 38 samples
+02:44:18 | INFO    | 
+======================================================================
+02:44:18 | INFO    |   FOLD 1/10 -- Test Subject: S1
+02:44:18 | INFO    | ======================================================================
+02:44:18 | INFO    |   Loaded 1326 samples, 10 folds, adjacency (20, 20)
+02:44:18 | INFO    |   Subject 1: 142 samples
+02:44:18 | INFO    |   Subject 2: 142 samples
+02:44:18 | INFO    |   Subject 3: 156 samples
+02:44:18 | INFO    |   Subject 4: 168 samples
+02:44:18 | INFO    |   Subject 5: 160 samples
+02:44:18 | INFO    |   Subject 6: 164 samples
+02:44:18 | INFO    |   Subject 7: 34 samples
+02:44:18 | INFO    |   Subject 8: 172 samples
+02:44:18 | INFO    |   Subject 9: 150 samples
+02:44:18 | INFO    |   Subject 10: 38 samples
+02:44:18 | INFO    | 
+======================================================================
+02:44:18 | INFO    |   FOLD 2/10 -- Test Subject: S2
+02:44:18 | INFO    | ======================================================================
+02:44:18 | INFO    | Fold 1: 718 train, 466 val, 142 test
+02:44:18 | INFO    |   Norm mean: [24.967108 91.96476  28.096416]
+02:44:18 | INFO    |   Norm std:  [ 88.0011   102.570076  91.64864 ]
+02:44:18 | INFO    | Fold 2: 718 train, 466 val, 142 test
+02:44:18 | INFO    |   Norm mean: [24.967108 91.96476  28.096416]
+02:44:18 | INFO    |   Norm std:  [ 88.0011   102.570076  91.64864 ]
+02:44:18 | INFO    |   Class weights: {0: '0.002786', 1: '0.002786'}
+02:44:18 | INFO    |   Class weights: {0: '0.002786', 1: '0.002786'}
+02:44:18 | INFO    |   Weighted sampler enabled — correct: 359, incorrect: 359
+02:44:18 | INFO    |   Weighted sampler enabled — correct: 359, incorrect: 359
+02:44:18 | INFO    |   Split sizes -- Train: 718, Val: 466, Test: 142
+02:44:18 | INFO    |   Split sizes -- Train: 718, Val: 466, Test: 142
+02:44:18 | INFO    |   DataLoader num_workers: 4
+02:44:18 | INFO    |   DataLoader num_workers: 4
+02:44:18 | INFO    |   Model parameters: 2,671,894
+02:44:18 | INFO    |   Model parameters: 2,671,894
+02:50:23 | INFO    |   Epoch   1/100 | Train Loss: 0.7167, Acc: 0.6170 | Val Loss: 0.7111, Acc: 0.5601 | LR: 1.00e-03 | Best: 0.5601 @ E1
+02:50:24 | INFO    |   Epoch   1/100 | Train Loss: 0.7031, Acc: 0.5724 | Val Loss: 0.7485, Acc: 0.5408 | LR: 1.00e-03 | Best: 0.5408 @ E1
+02:56:37 | INFO    |   Epoch   2/100 | Train Loss: 0.5942, Acc: 0.6643 | Val Loss: 0.8755, Acc: 0.5622 | LR: 9.94e-04 | Best: 0.5622 @ E2
+02:56:39 | INFO    |   Epoch   2/100 | Train Loss: 0.5587, Acc: 0.7103 | Val Loss: 0.5947, Acc: 0.6609 | LR: 9.94e-04 | Best: 0.6609 @ E2
+03:03:04 | INFO    |   Epoch   3/100 | Train Loss: 0.5201, Acc: 0.7284 | Val Loss: 0.5997, Acc: 0.6695 | LR: 9.76e-04 | Best: 0.6695 @ E3
+03:03:07 | INFO    |   Epoch   3/100 | Train Loss: 0.5073, Acc: 0.7228 | Val Loss: 0.6694, Acc: 0.6781 | LR: 9.76e-04 | Best: 0.6781 @ E3
+03:09:16 | INFO    |   Epoch   4/100 | Train Loss: 0.4193, Acc: 0.8120 | Val Loss: 0.5192, Acc: 0.6953 | LR: 9.46e-04 | Best: 0.6953 @ E4
+06:26:32 | INFO    |   Epoch   7/100 | Train Loss: 0.3284, Acc: 0.8621 | Val Loss: 0.6458, Acc: 0.7253 | LR: 7.94e-04 | Best: 0.7253 @ E7

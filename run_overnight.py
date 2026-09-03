@@ -36,7 +36,7 @@ TRAIN_ARGS = [
     "--weight_decay", "1e-4",
     "--dropout", "0.3",
     "--patience", "15",
-    "--num_workers", "4",
+    "--num_workers", "0",  # In-memory RAM dataset: 0 is 2.5x faster on Windows than multiprocessing
     "--parallel_folds", "0",  # Auto-detect (2 for CPU, 1 for GPU)
     "--checkpoint_file", str(CHECKPOINT_FILE),
     "--output_file", "./output/training_results.json",

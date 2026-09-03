@@ -454,8 +454,8 @@ def main():
                         help="Early stopping patience (epochs)")
     parser.add_argument("--output_file", type=str, default="./output/training_results.json",
                         help="Path to save results JSON")
-    parser.add_argument("--num_workers", type=int, default=4,
-                        help="Number of DataLoader worker threads (0=main thread only)")
+    parser.add_argument("--num_workers", type=int, default=0,
+                        help="Number of DataLoader worker threads (0=main thread in-memory, recommended on Windows)")
     parser.add_argument("--parallel_folds", type=int, default=0,
                         help="Number of folds to train in parallel (0=auto: 2 for CPU, 1 for GPU)")
     parser.add_argument("--checkpoint_file", type=str, default="./output/training_checkpoint.json",

@@ -28,7 +28,7 @@ In physical therapy and telerehabilitation, patients often perform prescribed ex
 This project addresses the challenge of **binary movement classification** (classifying an exercise repetition as **Correct / Optimal** vs. **Incorrect / Non-optimal**):
 - Handles high inter-subject anatomical variations (height, limb proportions, movement speed).
 - Models spatial relationships between physical joints and long-range kinematic dependencies.
-- Evaluates models strictly under **Leave-One-Subject-Out (LOSO)** cross-validation to guarantee generalization to unseen patients.
+- Evaluates models under a strict **subject-independent rotating group-holdout** protocol (5 train / 2 validation / 3 test subjects) to measure generalization to unseen patients.
 
 ---
 
@@ -67,10 +67,10 @@ ui-prmd-preprocessing/
 │   │   ├── subject_ids.npy               # (N,) Subject identifiers (1-10)
 │   │   ├── exercise_ids.npy              # (N,) Exercise identifiers (1-10)
 │   │   ├── adjacency.npy                 # (20, 20) Normalized graph adjacency
-│   │   ├── folds.json                    # LOSO cross-validation split definitions
+│   │   ├── folds.json                    # Subject-independent 5/2/3 fold definitions
 │   │   └── metadata.json                 # Preprocessing configuration & stats
-│   ├── training_checkpoint.json          # Incremental fold progress (crash resume)
-│   ├── training_results.json             # Final 10-fold cross-validation metrics
+│   ├── training_checkpoint_5_2_3.json    # Incremental fold progress (crash resume)
+│   ├── training_results_5_2_3.json       # Final subject-group evaluation metrics
 │   └── overnight_training.log            # Timestamped training logs
 │
 ├── ui_prmd_preprocess/                   # Core preprocessing & model package
@@ -81,7 +81,7 @@ ui-prmd-preprocessing/
 │   ├── filtering.py                      # Step 1.5: Kalman filter trajectory smoothing
 │   ├── features.py                       # Steps 5–6: Dual-stream & graph adjacency
 │   ├── normalization.py                  # Step 7: Leakage-free z-score normalization
-│   ├── splits.py                         # Step 8: 10-fold LOSO partitioning
+│   ├── splits.py                         # Step 8: 10 rotating subject-group folds
 │   ├── augmentation.py                   # Step 9: Stochastic online augmentations
 │   ├── dataset.py                        # Step 10: PyTorch Dataset & Weighted Sampler
 │   ├── pipeline.py                       # Pipeline Orchestrator (Steps 1–10 runner)
@@ -94,7 +94,7 @@ ui-prmd-preprocessing/
 │       ├── network.py                    # Dual-stream LST-LA-GCN model
 │       └── test_model.py                 # Architecture unit tests
 │
-├── train.py                              # Main training script (10-fold LOSO, parallel)
+├── train.py                              # Main training script (10 subject-group folds, parallel)
 ├── run_overnight.py                      # Robust daemon wrapper with auto-restart
 ├── run_preprocessing.py                  # Standalone preprocessing CLI
 ├── test_kalman.py                        # Kalman filter validation & benchmarks
@@ -129,7 +129,7 @@ Raw CSV (T, 22*6)
   ├─► [Step 5] Dual-Stream Feature Extraction (Joint Coordinates + Bone Vectors)
   ├─► [Step 6] Normalized Physical Graph Adjacency Construction (N=20 joints, 19 edges)
   ├─► [Step 7] Strict Leakage-Free Z-score Normalization (Mean/Std on Train fold only)
-  ├─► [Step 8] Cross-Subject Leave-One-Subject-Out (LOSO) Split Generation
+  ├─► [Step 8] Cross-Subject 5/2/3 Rotating Group-Holdout Splits
   ├─► [Step 9] Online Stochastic Data Augmentation (Rotation, Jitter, Crop, Scaling)
   └─► [Step 10] PyTorch DataLoaders & Class-Imbalance Weighted Sampling
 ```
@@ -179,11 +179,13 @@ To prevent data snooping across subjects, normalization statistics (channel-wise
 $$z = \frac{x - \mu_{\text{train}}}{\sigma_{\text{train}} + \epsilon}$$
 Validation and test sets are transformed using the training parameters.
 
-### Step 8: Cross-Subject LOSO Splitting
-To simulate deployment to a clinic where the model encounters new patients, evaluation uses 10-fold Leave-One-Subject-Out (LOSO):
-- **Test:** 1 unseen subject ($10\%$).
-- **Validation:** 3 subjects ($30\%$).
-- **Train:** 6 subjects ($60\%$).
+### Step 8: Cross-Subject 5/2/3 Splitting
+To simulate deployment where the model encounters unseen patients, evaluation uses 10 deterministic rotating folds:
+- **Test:** 3 unseen subjects ($30\%$).
+- **Validation:** 2 unseen subjects ($20\%$).
+- **Train:** 5 subjects ($50\%$).
+
+The partitions are disjoint within every fold. Each subject appears in three test folds, two validation folds, and five training folds. Because three subjects are held out for testing, this is technically repeated subject-group holdout rather than literal Leave-One-Subject-Out.
 
 ### Step 9: Online Stochastic Data Augmentation
 Applied dynamically during training epochs to combat overfitting:
@@ -250,9 +252,12 @@ At the conclusion of each fold, models are evaluated on the held-out test subjec
 - **Macro & Per-Class Precision**
 - **Macro & Per-Class Recall**
 - **Macro & Per-Class F1-Score**
+- **Sensitivity and Specificity**
+- **ROC-AUC**
+- **Support-weighted Precision, Recall, and F1**
 - **Confusion Matrix**
 
-Aggregated statistics across all 10 folds compute the mean and standard deviation ($\mu \pm \sigma$) for each metric.
+Aggregated statistics include ordinary fold mean/standard deviation and sample-count-weighted mean/standard deviation. Training data is balanced with SMOTE by default. Validation and primary test metrics always use untouched real samples; `--smote_test_diagnostic` provides a separately labelled synthetic diagnostic. The results also include a one-sample accuracy t-test against chance, plus an optional paired t-test with `--baseline_results`.
 
 ---
 
@@ -310,6 +315,6 @@ Stop-Process -Name "python" -Force
 
 All results are automatically generated in the `output/` directory:
 - `output/preprocessed/`: Tensor arrays ready for immediate training.
-- `output/training_checkpoint.json`: Checkpoint containing per-fold metrics and completed fold IDs.
-- `output/training_results.json`: Final aggregated summary with cross-validation means, variances, and confusion matrices.
+- `output/training_checkpoint_5_2_3.json`: Checkpoint containing per-fold metrics and completed fold IDs.
+- `output/training_results_5_2_3.json`: Final aggregated summary with unweighted and sample-count-weighted metrics, t-tests, and per-fold confusion matrices.
 - `output/overnight_training.log`: Chronological log containing loss progression, validation benchmarks, and system events.

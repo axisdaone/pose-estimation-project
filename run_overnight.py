@@ -24,9 +24,9 @@ from pathlib import Path
 MAX_RETRIES = 5
 RETRY_DELAY_SECONDS = 30  # Wait before restarting after a crash
 LOG_FILE = Path("./output/overnight_training.log")
-CHECKPOINT_FILE = Path("./output/training_checkpoint.json")
+CHECKPOINT_FILE = Path("./output/training_checkpoint_5_2_3.json")
 
-# Training arguments — full 10-fold LOSO with multithreading
+# Training arguments — full 10-fold 5/2/3 subject-group evaluation
 TRAIN_ARGS = [
     sys.executable, "train.py",
     "--num_folds", "10",
@@ -38,8 +38,9 @@ TRAIN_ARGS = [
     "--patience", "15",
     "--num_workers", "0",  # In-memory RAM dataset: 0 is 2.5x faster on Windows than multiprocessing
     "--parallel_folds", "0",  # Auto-detect (2 for CPU, 1 for GPU)
+    "--smote_test_diagnostic",  # Synthetic diagnostic; raw test remains primary
     "--checkpoint_file", str(CHECKPOINT_FILE),
-    "--output_file", "./output/training_results.json",
+    "--output_file", "./output/training_results_5_2_3.json",
 ]
 
 

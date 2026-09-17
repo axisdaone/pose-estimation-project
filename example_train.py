@@ -152,8 +152,8 @@ def example_10fold():
         # test_acc = evaluate(model, loaders['test'])
         # fold_results.append(test_acc)
 
-        test_subject = fold_data["fold_info"]["test"]
-        print(f"  Test subject: S{test_subject[0]}")
+        test_subjects = fold_data["fold_info"]["test"]
+        print(f"  Test subjects: {', '.join('S'+str(s) for s in test_subjects)}")
         print(f"  Train batches: {len(loaders['train'])}")
         print(f"  Val batches:   {len(loaders['val'])}")
         print(f"  Test batches:  {len(loaders['test'])}")

@@ -250,6 +250,12 @@ class PreprocessingPipeline:
             "n_joints": self.n_joints,
             "target_sequence_length": self.target_len,
             "n_folds": len(self.folds),
+            "evaluation_protocol": "rotating_subject_group_holdout",
+            "subject_split": {
+                "train": config.TRAIN_SIZE,
+                "validation": config.VAL_SIZE,
+                "test": config.TEST_SIZE,
+            },
             "label_distribution": {
                 "correct": sum(1 for l in self.labels if l == 1),
                 "incorrect": sum(1 for l in self.labels if l == 0),

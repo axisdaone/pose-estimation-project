@@ -179,10 +179,19 @@ N_EXERCISES = 10
 N_REPS = 10
 N_FOLDS = 10  # Leave-one-subject-out cross-validation
 
-# Cross-subject split: 6 train / 3 val / 1 test
-TRAIN_SIZE = 6
-VAL_SIZE = 3
-TEST_SIZE = 1
+# Subject-independent rotating group holdout: 5 train / 2 val / 3 test.
+# This is often described informally as "LOSO" in project notes, but strict
+# Leave-One-Subject-Out has exactly one test subject. With three test subjects,
+# the statistically precise name is rotating subject-group holdout.
+TRAIN_SIZE = 5
+VAL_SIZE = 2
+TEST_SIZE = 3
+
+# SMOTE is applied only to the training partition by default. A separate,
+# explicitly labelled test-SMOTE diagnostic can be enabled from train.py, but
+# it must never replace metrics computed on the untouched real test subjects.
+USE_SMOTE_TRAIN = True
+SMOTE_RANDOM_STATE = 42
 
 # Weighted sampling — use inverse-frequency weights to balance class counts
 # across folds (especially important for minority subjects like S7 and S10)

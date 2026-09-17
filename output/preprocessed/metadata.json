@@ -18,5 +18,11 @@
     "mean": 218.92006033182503,
     "median": 208.0
   },
-  "data_root": "data\\UI-PRMD\\Reduced_Dataset\\Kinect"
+  "data_root": "data\\UI-PRMD\\Reduced_Dataset\\Kinect",
+  "evaluation_protocol": "rotating_subject_group_holdout",
+  "subject_split": {
+    "train": 5,
+    "validation": 2,
+    "test": 3
+  }
 }

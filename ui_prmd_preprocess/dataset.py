@@ -3,8 +3,8 @@ PyTorch Dataset & DataLoaders — Step 10 of the UI-PRMD pipeline.
 
 Provides:
   - UIPRMDDataset:   Core dataset wrapping preprocessed samples.
-  - LOSOFoldManager: Loads saved .npy data and yields per-fold DataLoaders.
-  - create_fold_dataloaders: One-call setup for a single LOSO fold with
+  - LOSOFoldManager: Loads saved .npy data and yields subject-independent folds.
+  - create_fold_dataloaders: One-call setup for a single subject-group fold with
     weighted sampling to handle minority subjects (S7, S10).
 """
 
@@ -29,6 +29,48 @@ from .normalization import compute_channel_stats, normalize
 from .augmentation import augment
 
 logger = logging.getLogger(__name__)
+
+
+def smote_resample_sequences(
+    samples: np.ndarray,
+    labels: np.ndarray,
+    random_state: int = config.SMOTE_RANDOM_STATE,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Balance sequence classes with SMOTE while preserving tensor shape.
+
+    SMOTE operates on feature vectors, so each ``(C, T, J)`` sequence is
+    flattened temporarily and reshaped after interpolation. This is suitable
+    for training-time imbalance handling, though synthetic skeletons should be
+    treated as interpolated training examples rather than real observations.
+    """
+    samples = np.asarray(samples)
+    labels = np.asarray(labels)
+    classes, counts = np.unique(labels, return_counts=True)
+    if len(classes) < 2 or counts.min() == counts.max():
+        return samples.copy(), labels.copy()
+
+    try:
+        from imblearn.over_sampling import SMOTE
+    except ImportError as exc:
+        raise ImportError(
+            "SMOTE requires imbalanced-learn. Install project requirements "
+            "with: pip install -r requirements.txt"
+        ) from exc
+
+    # SMOTE requires at least k_neighbors + 1 minority observations.
+    k_neighbors = min(5, int(counts.min()) - 1)
+    if k_neighbors < 1:
+        logger.warning("SMOTE skipped: minority class has fewer than 2 samples")
+        return samples.copy(), labels.copy()
+
+    original_shape = samples.shape[1:]
+    flat_samples = samples.reshape(len(samples), -1)
+    sampler = SMOTE(random_state=random_state, k_neighbors=k_neighbors)
+    resampled, resampled_labels = sampler.fit_resample(flat_samples, labels)
+    return (
+        resampled.reshape((-1,) + original_shape).astype(samples.dtype, copy=False),
+        resampled_labels.astype(labels.dtype, copy=False),
+    )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -114,12 +156,12 @@ class UIPRMDDataset(Dataset):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# LOSO Fold Manager — loads from disk, iterates folds
+# Subject-group fold manager — loads from disk, iterates folds
 # ═════════════════════════════════════════════════════════════════════════════
 
 class LOSOFoldManager:
     """
-    Manages Leave-One-Subject-Out cross-validation from saved preprocessed data.
+    Manages subject-independent group-holdout folds from preprocessed data.
 
     Loads samples.npy, labels.npy, subject_ids.npy, adjacency.npy, and
     folds.json once, then yields per-fold DataLoaders on demand.
@@ -196,12 +238,16 @@ class LOSOFoldManager:
         batch_size: int = 32,
         num_workers: int = 0,
         use_weighted_sampler: bool = config.USE_WEIGHTED_SAMPLER,
+        use_smote_train: bool = config.USE_SMOTE_TRAIN,
+        smote_test_diagnostic: bool = False,
+        smote_random_state: int = config.SMOTE_RANDOM_STATE,
     ) -> Dict[str, DataLoader]:
         """
-        Create train/val/test DataLoaders for a specific LOSO fold.
+        Create train/val/test DataLoaders for a subject-independent fold.
 
         - Normalization stats are computed on the training split ONLY.
         - Training loader uses augmentation (including random yaw rotation).
+        - Training data can be balanced with SMOTE.
         - Training loader uses WeightedRandomSampler when enabled, to
           handle class imbalance that arises from unequal subject sample
           counts (e.g., Subject 7 has only 34 samples vs Subject 8's 172).
@@ -212,6 +258,11 @@ class LOSOFoldManager:
             num_workers: DataLoader workers.
             use_weighted_sampler: If True, use inverse-frequency class
                 weighting in the training sampler.
+            use_smote_train: Apply SMOTE to training samples only.
+            smote_test_diagnostic: Also construct a synthetic, explicitly
+                diagnostic test loader. The ordinary ``test`` loader always
+                contains untouched real samples and remains the primary result.
+            smote_random_state: Reproducibility seed for SMOTE.
 
         Returns:
             Dict with 'train', 'val', 'test' DataLoaders and metadata:
@@ -226,8 +277,16 @@ class LOSOFoldManager:
         val_samples, val_labels = split_data["val"]
         test_samples, test_labels = split_data["test"]
 
-        # ── Normalization: compute stats on training data ONLY ──────────
+        # Fit normalization on untouched real training observations only.
+        # Validation, test, and synthetic samples must never influence it.
         mean, std = compute_channel_stats(list(train_samples))
+
+        if use_smote_train:
+            before = len(train_samples)
+            train_samples, train_labels = smote_resample_sequences(
+                train_samples, train_labels, random_state=smote_random_state
+            )
+            logger.info(f"  Training SMOTE: {before} -> {len(train_samples)} samples")
 
         logger.info(
             f"Fold {fold_idx + 1}: "
@@ -293,6 +352,25 @@ class LOSOFoldManager:
             "std": std,
             "fold_info": fold,
         }
+
+        if smote_test_diagnostic:
+            diagnostic_samples, diagnostic_labels = smote_resample_sequences(
+                test_samples, test_labels, random_state=smote_random_state
+            )
+            diagnostic_ds = UIPRMDDataset(
+                list(diagnostic_samples), list(diagnostic_labels),
+                self.adjacency, mean, std, do_augment=False,
+            )
+            loaders["test_smote_diagnostic"] = DataLoader(
+                diagnostic_ds,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=num_workers,
+            )
+            logger.warning(
+                "  Test-SMOTE diagnostic enabled: these synthetic metrics are "
+                "not a valid estimate of real-subject generalization"
+            )
 
         return loaders
 

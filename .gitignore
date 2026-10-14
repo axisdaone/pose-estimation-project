@@ -1,3 +1,7 @@
 __pycache__/
 *.py[cod]
 tmp/
+.venv-gpu/
+output/overnight_*/
+data/UI-PRMD/Kinect_Segmented/
+output/overnight_gpu_runner*.log

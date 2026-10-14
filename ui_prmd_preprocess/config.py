@@ -11,7 +11,7 @@ from pathlib import Path
 # =============================================================================
 # Dataset Paths (override via CLI or environment)
 # =============================================================================
-DEFAULT_DATA_ROOT = Path("./data/UI-PRMD/Reduced_Dataset/Kinect")
+DEFAULT_DATA_ROOT = Path("./data/UI-PRMD/Kinect_Segmented")
 DEFAULT_OUTPUT_DIR = Path("./output/preprocessed")
 
 # =============================================================================
@@ -72,31 +72,18 @@ POS_OFFSET_Z = 5
 # =============================================================================
 # We use a 20-joint subset that matches the standard GCN skeleton topology.
 # Map from 20-joint index → raw CSV joint index
-JOINT_SUBSET_20 = list(range(20))  # Use first 20 of the 22 raw joints
+JOINT_SUBSET_20 = [0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 
 N_JOINTS = 20  # Final joint count for the GCN
 
+# UI-PRMD's exported Kinect skeleton differs from the Kinect SDK joint order.
+# The graph keeps the chest, and omits neck and head tip after reconstruction.
 JOINT_NAMES_20 = [
-    "Waist",            # 0  — SpineBase (root)
-    "Spine",            # 1  — SpineMid
-    "ShoulderCenter",   # 2  — Neck
-    "Head",             # 3
-    "ShoulderLeft",     # 4
-    "ElbowLeft",        # 5
-    "WristLeft",        # 6
-    "HandLeft",         # 7
-    "ShoulderRight",    # 8
-    "ElbowRight",       # 9
-    "WristRight",       # 10
-    "HandRight",        # 11
-    "HipLeft",          # 12
-    "KneeLeft",        # 13
-    "AnkleLeft",        # 14
-    "FootLeft",         # 15
-    "HipRight",         # 16
-    "KneeRight",        # 17
-    "AnkleRight",       # 18
-    "FootRight",        # 19
+    "Waist", "Spine", "Chest", "Head", "LeftCollar", "LeftUpperArm",
+    "LeftForearm", "LeftHand", "RightCollar", "RightUpperArm",
+    "RightForearm", "RightHand", "LeftUpperLeg", "LeftLowerLeg",
+    "LeftFoot", "LeftToes", "RightUpperLeg", "RightLowerLeg",
+    "RightFoot", "RightToes",
 ]
 
 ROOT_JOINT_INDEX = 0  # Waist / SpineBase is the root

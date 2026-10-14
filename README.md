@@ -263,6 +263,46 @@ Aggregated statistics include ordinary fold mean/standard deviation and sample-c
 
 ## Multithreading & Overnight Execution
 
+### Fresh GPU pipeline
+
+The corrected source is `data/UI-PRMD/Kinect_Segmented`: separate 66-column
+position and angle files named `m##_s##_e##_positions[_inc].txt`. The earlier
+`Reduced_Dataset/Kinect` folder actually contains 117-column data incompatible
+with the Kinect parser. It is preserved for reference and rejected by the new
+run. `prepare_kinect_data.py` fetches 4000 original segmented Kinect files from
+a pinned public mirror and verifies every Git blob hash. This provides 2000
+repetitions with explicit subject IDs, avoiding inferred repetition-to-subject
+mapping. Source details are saved in `source.json` alongside the downloaded data.
+
+The new Kinect path reconstructs absolute Cartesian positions from paired
+positions and parent Euler rotations, preserves XYZ position columns, maps the
+actual UI-PRMD joint order to 20 graph nodes (omitting neck and head tip), and
+uses a constant median leg-length scale per sequence before Kalman smoothing
+and resampling. Reconstruction is regression-tested against published absolute
+coordinates in `tests/fixtures/kinect_reference.json`. Malformed files fail
+instead of being padded with zeros, and preprocessing fails on skipped samples.
+
+`run_pipeline_overnight.py` regenerates and validates all raw data, then trains
+the ten existing 5 train / 2 validation / 3 test subject folds. Use the isolated
+CUDA environment on this laptop:
+
+```powershell
+.\.venv-gpu\Scripts\python.exe run_pipeline_overnight.py
+```
+
+The default output directory is `output/overnight_2026_10_09`; supply a fresh
+`--run_dir` for a new experiment. It contains preprocessing arrays, logs,
+`status.json`, completed-fold `checkpoint.json`, best weights plus train-only
+normalization in `models/fold_*_best.pt`, and final `results.json`. Training uses
+one GPU fold at a time, four CPU threads, batch size 8, up to 100 epochs, and
+validation early stopping with patience 15. SMOTE applies only to training;
+validation and test remain real data. The runner retries failed training up to
+five times, skips completed folds, and prevents automatic system sleep while
+running on Windows. An interrupted unfinished fold starts again from epoch 1;
+saved best weights are retained. Keep the laptop powered on and connected to
+power; manually sleeping, shutting down, or closing a lid configured to sleep
+will interrupt training.
+
 To allow fast and fault-tolerant full 10-fold training on local hardware, a 3-level concurrency hierarchy is implemented:
 
 | Level | Mechanism | Description |

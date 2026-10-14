@@ -105,11 +105,16 @@ class PreprocessingPipeline:
         for i, entry in enumerate(self.manifest):
             try:
                 # Load raw positions from CSV
-                raw = load_sample(entry["filepath"])  # (T, N, 3) in YXZ
+                is_kinect_pair = entry.get("coordinate_format") == "kinect_pair"
+                if is_kinect_pair:
+                    from .kinect import load_kinect_sample
+                    raw = load_kinect_sample(entry["filepath"])
+                else:
+                    raw = load_sample(entry["filepath"])
                 self.sequence_lengths.append(raw.shape[0])
 
                 # Run Steps 1-4
-                processed = preprocess_sample(raw, target_len=self.target_len)  # (T, N, 3)
+                processed = preprocess_sample(raw, target_len=self.target_len, absolute_xyz=is_kinect_pair)
 
                 # Convert to CTN format for GCN: (3, T, N)
                 processed_ctn = to_ctn(processed)
@@ -129,6 +134,8 @@ class PreprocessingPipeline:
 
         logger.info(f"[Steps 1-4] Done. {len(self.samples)} samples processed, "
                      f"{n_errors} errors.")
+        if n_errors:
+            raise RuntimeError(f"Preprocessing failed for {n_errors} files; refusing an incomplete dataset")
 
         # ── Print sequence length statistics ─────────────────────────────
         if self.sequence_lengths:
@@ -267,6 +274,11 @@ class PreprocessingPipeline:
                 "median": float(np.median(self.sequence_lengths)),
             },
             "data_root": str(self.data_root),
+            "coordinate_format": self.manifest[0].get("coordinate_format", "legacy_interleaved"),
+            "kalman_enabled": config.ENABLE_KALMAN_FILTER,
+            "kinect_joint_subset": ([0, 1, 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+                                    if self.manifest[0].get("coordinate_format") == "kinect_pair" else None),
+            "kinect_scale": "sequence_median_leg_length" if self.manifest[0].get("coordinate_format") == "kinect_pair" else None,
         }
         with open(output_dir / "metadata.json", "w") as f:
             json.dump(metadata, f, indent=2)

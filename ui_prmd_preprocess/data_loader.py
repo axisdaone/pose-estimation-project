@@ -30,6 +30,9 @@ def discover_files(data_root: Path) -> List[Dict]:
     data_root = Path(data_root)
     if not data_root.exists():
         raise FileNotFoundError(f"Data root not found: {data_root}")
+    if (data_root / "correct" / "positions").is_dir():
+        from .kinect import discover_kinect_files
+        return discover_kinect_files(data_root)
 
     manifest = []
 
@@ -221,12 +224,9 @@ def load_csv_positions(filepath: Path,
                 raise
 
             expected_cols = n_raw_joints * cols_per_joint
-            if len(values) < expected_cols:
-                logger.warning(
-                    f"Row {row_idx} in {filepath.name} has {len(values)} columns, "
-                    f"expected {expected_cols}. Padding with zeros."
-                )
-                values.extend([0.0] * (expected_cols - len(values)))
+            if len(values) != expected_cols:
+                raise ValueError(f"{filepath}: row {row_idx} has {len(values)} columns; "
+                                 f"expected {expected_cols}. Refusing to pad or truncate skeletal data.")
 
             frames.append(values[:expected_cols])
 

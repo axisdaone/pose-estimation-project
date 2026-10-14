@@ -185,6 +185,7 @@ def resample_ctn(
 def preprocess_sample(
     raw_positions: np.ndarray,
     target_len: int = config.TARGET_SEQUENCE_LENGTH,
+    absolute_xyz: bool = False,
 ) -> np.ndarray:
     """
     Run the full geometric preprocessing pipeline (Steps 1–4) on one sample.
@@ -197,7 +198,7 @@ def preprocess_sample(
         (target_len, N, 3) preprocessed skeleton in (X, Y, Z), centered on root.
     """
     # Step 1: Reconstruct absolute coordinates
-    abs_positions = reconstruct_absolute_positions(raw_positions)
+    abs_positions = raw_positions.copy() if absolute_xyz else reconstruct_absolute_positions(raw_positions)
 
     # Step 1.5: Kalman filter smoothing (reduces sensor noise & interpolation jumps)
     if config.ENABLE_KALMAN_FILTER:
@@ -209,7 +210,7 @@ def preprocess_sample(
         )
 
     # Step 2: Align axes YXZ → XYZ
-    aligned = align_axes(abs_positions)
+    aligned = abs_positions if absolute_xyz else align_axes(abs_positions)
 
     # Step 3: Center on root joint
     centered = center_on_root(aligned)

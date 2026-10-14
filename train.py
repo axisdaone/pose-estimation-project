@@ -268,6 +268,7 @@ def train_fold(
     use_smote_train: bool = True,
     smote_test_diagnostic: bool = False,
     seed: int = 42,
+    model_dir: str = None,
 ) -> Dict:
     """
     Train and evaluate one subject-independent 5/2/3 fold.
@@ -386,10 +387,21 @@ def train_fold(
         history["lr"].append(current_lr)
 
         # ── Early stopping check ─────────────────────────────────────────
-        if val_acc > best_val_acc:
+        if best_model_state is None or val_acc > best_val_acc:
             best_val_acc = val_acc
             best_epoch = epoch + 1
             best_model_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            if model_dir:
+                model_path = Path(model_dir) / f"fold_{fold_idx + 1}_best.pt"
+                model_path.parent.mkdir(parents=True, exist_ok=True)
+                temporary = model_path.with_suffix(".tmp")
+                torch.save({"model_state_dict": best_model_state,
+                            "fold": manager.folds[fold_idx], "epoch": best_epoch,
+                            "val_accuracy": best_val_acc, "seed": fold_seed,
+                            "normalization_mean": loaders["mean"],
+                            "normalization_std": loaders["std"],
+                            "channels": channels, "dropout": dropout}, temporary)
+                temporary.replace(model_path)
             epochs_without_improvement = 0
         else:
             epochs_without_improvement += 1
@@ -489,8 +501,10 @@ def save_checkpoint(checkpoint_path: Path, fold_results: List[Dict], config_dict
         "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
     }
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(checkpoint_path, "w") as f:
+    temporary = checkpoint_path.with_suffix(".tmp")
+    with open(temporary, "w") as f:
         json.dump(checkpoint, f, indent=2)
+    temporary.replace(checkpoint_path)
     logger.info(f"  Checkpoint saved: {checkpoint_path} ({len(fold_results)} folds complete)")
 
 
@@ -658,6 +672,10 @@ def main():
             "enables a paired t-test on fold accuracies"
         ),
     )
+    parser.add_argument("--threads_per_fold", type=int, default=0,
+                        help="CPU threads per fold (0=auto)")
+    parser.add_argument("--model_dir", type=str, default=None,
+                        help="Directory for best model weights and normalization per fold")
     args = parser.parse_args()
 
     # ── Configure PyTorch threading ──────────────────────────────────────
@@ -670,7 +688,7 @@ def main():
     logger.info(f"Using device: {device}")
     if device.type == "cuda":
         logger.info(f"  GPU: {torch.cuda.get_device_name(0)}")
-        logger.info(f"  Memory: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
+        logger.info(f"  Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
     # ── Determine parallelism ────────────────────────────────────────────
     if args.parallel_folds == 0:
@@ -689,6 +707,8 @@ def main():
         effective_num_workers = args.num_workers
 
     logger.info(f"Parallel folds: {parallel_folds}")
+    if args.threads_per_fold > 0:
+        threads_per_fold = args.threads_per_fold
     logger.info(f"DataLoader workers per fold: {effective_num_workers}")
     logger.info(f"PyTorch threads per fold: {threads_per_fold}")
 
@@ -720,6 +740,7 @@ def main():
         "smote_train": not args.no_smote_train,
         "smote_test_diagnostic": args.smote_test_diagnostic,
         "baseline_results": args.baseline_results,
+        "model_dir": args.model_dir,
     }
 
     logger.info(f"\n{'='*70}")
@@ -772,6 +793,7 @@ def main():
         use_smote_train=not args.no_smote_train,
         smote_test_diagnostic=args.smote_test_diagnostic,
         seed=args.seed,
+        model_dir=args.model_dir,
     )
 
     if parallel_folds > 1 and len(remaining_folds) > 1:
@@ -808,6 +830,8 @@ def main():
 
     # Sort results by fold index for consistent output
     fold_results.sort(key=lambda r: r["fold_index"])
+    if {r["fold_index"] for r in fold_results} != set(all_fold_indices):
+        raise RuntimeError("Some folds failed; completed folds are checkpointed for retry")
 
     total_time = time.time() - total_start
 
